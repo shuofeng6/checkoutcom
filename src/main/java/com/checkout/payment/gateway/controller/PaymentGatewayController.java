@@ -29,6 +29,14 @@ public class PaymentGatewayController {
   @PostMapping("/payments")
   public ResponseEntity<PostPaymentResponse> postPayment(@RequestBody PostPaymentRequest request) {
     PostPaymentResponse response = paymentGatewayService.processPayment(request);
-    return new ResponseEntity<>(response, HttpStatus.CREATED);
+    
+    // Return appropriate HTTP status based on payment status
+    HttpStatus status = switch (response.getStatus()) {
+      case AUTHORIZED -> HttpStatus.OK;
+      case DECLINED -> HttpStatus.OK;
+      case REJECTED -> HttpStatus.BAD_REQUEST;
+    };
+    
+    return new ResponseEntity<>(response, status);
   }
 }

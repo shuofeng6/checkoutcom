@@ -102,18 +102,22 @@ class PaymentGatewayServiceTest {
   }
 
   @Test
-  void shouldThrowExceptionWhenValidationFails() {
+  void shouldReturnRejectedWhenValidationFails() {
     // Given
     doThrow(new PaymentValidationException("Invalid card number"))
         .when(paymentValidator).validate(validRequest);
 
-    // When / Then
-    assertThrows(PaymentValidationException.class,
-        () -> paymentGatewayService.processPayment(validRequest));
+    // When
+    PostPaymentResponse response = paymentGatewayService.processPayment(validRequest);
+
+    // Then
+    assertNotNull(response);
+    assertEquals(PaymentStatus.REJECTED, response.getStatus());
+    assertNotNull(response.getId());
 
     verify(paymentValidator).validate(validRequest);
     verify(bankSimulatorService, never()).authorize(any());
-    verify(paymentsRepository, never()).add(any());
+    verify(paymentsRepository).add(response); // REJECTED payments are now stored
   }
 
   @Test

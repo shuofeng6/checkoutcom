@@ -87,7 +87,7 @@ class PaymentGatewayIntegrationTest {
     mockMvc.perform(post("/payments")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
-        .andExpect(status().isCreated())
+        .andExpect(status().isOk())
         .andExpect(jsonPath("$.status").value("Declined"))
         .andExpect(jsonPath("$.id").exists())
         .andExpect(jsonPath("$.cardNumberLastFour").value(8888));
@@ -110,8 +110,8 @@ class PaymentGatewayIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").exists())
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Card number must be between 14-19 characters")));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.id").exists());
   }
 
   @Test
@@ -131,8 +131,8 @@ class PaymentGatewayIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").exists())
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Expiry month must be between 1-12")));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.id").exists());
   }
 
   @Test
@@ -152,7 +152,8 @@ class PaymentGatewayIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").exists());
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.id").exists());
   }
 
   @Test
@@ -172,8 +173,8 @@ class PaymentGatewayIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").exists())
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Currency must be one of: USD, GBP, EUR")));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.id").exists());
   }
 
   @Test
@@ -193,8 +194,8 @@ class PaymentGatewayIntegrationTest {
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestJson))
         .andExpect(status().isBadRequest())
-        .andExpect(jsonPath("$.message").exists())
-        .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Amount must be a positive integer")));
+        .andExpect(jsonPath("$.status").value("Rejected"))
+        .andExpect(jsonPath("$.id").exists());
   }
 
   @Test

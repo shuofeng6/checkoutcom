@@ -41,8 +41,15 @@ public class PaymentGatewayService {
             ? paymentRequest.getCardNumber().substring(paymentRequest.getCardNumber().length() - 4)
             : "****");
 
-    // 1. Validate the request (if validation fails, exception is thrown - payment not stored)
-    paymentValidator.validate(paymentRequest);
+    // 1. Validate the request - if validation fails, create REJECTED payment
+    try {
+      paymentValidator.validate(paymentRequest);
+    } catch (Exception e) {
+      LOG.warn("Payment validation failed: {}", e.getMessage());
+      PostPaymentResponse rejectedResponse = buildRejectedResponse(paymentRequest);
+      paymentsRepository.add(rejectedResponse);
+      return rejectedResponse;
+    }
 
     // 2. Call bank simulator (if bank call fails, exception is thrown - payment not stored)
     BankSimulatorResponse bankResponse = bankSimulatorService.authorize(paymentRequest);
@@ -74,6 +81,33 @@ public class PaymentGatewayService {
     response.setCardNumberLastFour(
         Integer.parseInt(cardNumber.substring(cardNumber.length() - 4))
     );
+
+    response.setExpiryMonth(request.getExpiryMonth());
+    response.setExpiryYear(request.getExpiryYear());
+    response.setCurrency(request.getCurrency());
+    response.setAmount(request.getAmount());
+
+    return response;
+  }
+
+  private PostPaymentResponse buildRejectedResponse(PostPaymentRequest request) {
+    PostPaymentResponse response = new PostPaymentResponse();
+    response.setId(UUID.randomUUID());
+    response.setStatus(PaymentStatus.REJECTED);
+
+    // Try to extract card details if available
+    if (request.getCardNumber() != null && request.getCardNumber().length() >= 4) {
+      String cardNumber = request.getCardNumber();
+      try {
+        response.setCardNumberLastFour(
+            Integer.parseInt(cardNumber.substring(cardNumber.length() - 4))
+        );
+      } catch (NumberFormatException e) {
+        response.setCardNumberLastFour(0);
+      }
+    } else {
+      response.setCardNumberLastFour(0);
+    }
 
     response.setExpiryMonth(request.getExpiryMonth());
     response.setExpiryYear(request.getExpiryYear());
